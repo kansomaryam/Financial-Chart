@@ -1,0 +1,9 @@
+.financial-chart-block {
+    padding: 20px;
+    margin-bottom: 30px;
+}
+
+.financial-chart-block canvas {
+    max-width: 100%;
+    height: 400px !important;
+}
