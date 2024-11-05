@@ -14,21 +14,23 @@ function enqueue_and_localize_chart_scripts() {
 
     // Enqueue Chart.js and custom script
     wp_enqueue_script('chart-js', 'https://cdn.jsdelivr.net/npm/chart.js', [], null, true);
-    wp_enqueue_script('financial-chart-script', get_template_directory_uri() . '/assets/js/financial-chart.js', ['chart-js'], '1.0', true);
+    wp_enqueue_script('financial-chart-script', plugin_dir_file(__FILE__) . '/assets/js/financial-chart.js', ['chart-js'], '1.0', true);
 
     // Prepare data based on chart type
     if ($chart_type === 'line') {
-        $x_data_values = get_field('data_points');
-        $data_pairs = [];
 
-        if (is_array($x_data_values)) {
-            foreach ($x_data_values as $data) {
+        $data_points = get_field('data_points'); // Assuming 'data_points' is the repeater field
+        $data_pairs = [];
+        
+        if ($data_points) {
+            foreach ($data_points as $point) {
                 $data_pairs[] = [
-                    'x' => $data['x_value'] ?? '',
-                    'y' => $data['y_value'] ?? 0,
+                    'x' => $point['x_value'] ?? '', // Ensure subfields are correctly named
+                    'y' => $point['y_value'] ?? 0,
                 ];
             }
         }
+        
 
         wp_localize_script('financial-chart-script', 'financialChartData', [
             'chartTitle' => $chart_title,
@@ -71,4 +73,21 @@ function output_chart_canvas() {
 
 // Output chart canvas directly in the template
 output_chart_canvas();
+
+/*
+function append_chart_canvas($content) {
+    $chart_type = get_field('chart_type');
+    $canvas_html = '';
+
+    if ($chart_type === 'line') {
+        $canvas_html = '<canvas id="lineChartCanvas"></canvas>';
+    } elseif ($chart_type === 'pie') {
+        $canvas_html = '<canvas id="pieChartCanvas"></canvas>';
+    }
+
+    return $content . $canvas_html;
+}
+
+add_filter('the_content', 'append_chart_canvas');
+*/
 ?>

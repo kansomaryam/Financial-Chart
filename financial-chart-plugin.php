@@ -50,14 +50,14 @@ function register_financial_chart_block() {
         'name'              => 'financial-chart',
         'title'             => __('Financial Chart'),
         'description'       => __('A block to display financial data in a chart.'),
-        'render_template'   => 'template-parts/blocks/financial-chart.php',
+        'render_template'   =>  plugin_dir_path(__FILE__) .'template-parts/blocks/financial-chart.php',
         'category'          => 'widgets',
         'icon'              => 'chart-line',
         'keywords'          => array('chart', 'financial'),
         'enqueue_assets'    => function() {
             wp_enqueue_script('chart-js', 'https://cdn.jsdelivr.net/npm/chart.js', array(), '3.9.0', true);
-            wp_enqueue_script('financial-chart-script', plugin_dir_url(__FILE__) . 'assets/js/financial-chart.js', array('chart-js'), '1.0', true);
-            wp_enqueue_style('financial-chart-style', plugin_dir_url(__FILE__) . 'assets/css/financial-chart.css'); // If you have CSS for styling
+            wp_enqueue_script('financial-chart-script', plugin_dir_path(__FILE__) . 'assets/js/financial-chart.js', array('chart-js'), '1.0', true);
+            wp_enqueue_style('financial-chart-style', plugin_dir_path(__FILE__) . 'assets/css/financial-chart.css'); // If you have CSS for styling
         },
         'supports' => array(
             'align' => true,
@@ -65,3 +65,10 @@ function register_financial_chart_block() {
         ),
     ));
 }
+
+function enqueue_chart_scripts() {
+    wp_enqueue_script( 'chart-js', 'https://cdn.jsdelivr.net/npm/chart.js', array(), null, true );
+}
+add_action( 'wp_enqueue_scripts', 'enqueue_chart_scripts' );
+
+

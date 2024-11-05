@@ -1,19 +1,25 @@
 document.addEventListener('DOMContentLoaded', function() {
-    // Form elements for toggling visibility
-    const chartTypeSelect = document.getElementById('acf-field-chart_type'); // Update with the correct ID
-    const dataPointsSection = document.querySelector('.acf-field-data-points'); // Update with the correct class/selector
-    const pieDataSection = document.querySelector('.acf-field-pie-data'); // Update with the correct class/selector
+    // Use specific selectors based on field keys or general selectors if needed
+    const chartTypeSelect = document.querySelector('.chart-type-selector select');
+    const dataPointsSection = document.querySelector('.data-points-section');
+    const pieDataSection = document.querySelector('.pie-data-section');
+    
 
-    // Function to toggle form sections
+    // Function to toggle form sections based on chart type selection
     function toggleFormSections() {
         if (chartTypeSelect && chartTypeSelect.value === 'line') {
-            dataPointsSection.style.display = 'block'; // Show Data Points
-            pieDataSection.style.display = 'none';     // Hide Pie Data
+            if (dataPointsSection) dataPointsSection.style.display = 'block'; // Show Data Points
+            if (pieDataSection) pieDataSection.style.display = 'none'; // Hide Pie Data
         } else if (chartTypeSelect && chartTypeSelect.value === 'pie') {
-            dataPointsSection.style.display = 'none';  // Hide Data Points
-            pieDataSection.style.display = 'block';    // Show Pie Data
+            if (dataPointsSection) dataPointsSection.style.display = 'none'; // Hide Data Points
+            if (pieDataSection) pieDataSection.style.display = 'block'; // Show Pie Data
+        } else {
+            // Hide both sections if another chart type (like "bar") is selected
+            if (dataPointsSection) dataPointsSection.style.display = 'none';
+            if (pieDataSection) pieDataSection.style.display = 'none';
         }
     }
+
 
     // Initialize form sections on page load
     toggleFormSections();
