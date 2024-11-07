@@ -1,93 +1,74 @@
 <?php
-/**
- * Financial Chart Block Template
- */
+// Fetch chart type from ACF
+$chart_type = get_field('chart_type'); // Should be 'line' or 'pie'
+$chart_title = get_field('chart_title');
+$data_points = get_field('data_points'); // For line chart
+$chart_data = get_field('chart_data'); // For pie chart
+$y_axis_label = get_field('y_axis_label');
+$x_axis_label = get_field('x_axis_label');
+$background_color = get_field('background_color') ?: 'rgba(75, 192, 192, 0.2)'; // Default color
+$border_color = get_field('border_color') ?: 'rgb(75, 192, 192)'; // Default color
 
-// Enqueue and localize scripts
-add_action('wp_enqueue_scripts', 'enqueue_and_localize_chart_scripts');
+// Initialize data arrays
+$chart_labels = [];
+$chart_values = [];
+$chart_colors = [];
 
-function enqueue_and_localize_chart_scripts() {
-    // Get ACF fields
-    $chart_title = get_field('chart_title');
-    $chart_type = get_field('chart_type');
-    $chart_color = get_field('chart_colors') ?: '#007bff';
-
-    // Enqueue Chart.js and custom script
-    wp_enqueue_script('chart-js', 'https://cdn.jsdelivr.net/npm/chart.js', [], null, true);
-    wp_enqueue_script('financial-chart-script', plugin_dir_file(__FILE__) . '/assets/js/financial-chart.js', ['chart-js'], '1.0', true);
-
-    // Prepare data based on chart type
-    if ($chart_type === 'line') {
-
-        $data_points = get_field('data_points'); // Assuming 'data_points' is the repeater field
-        $data_pairs = [];
-        
-        if ($data_points) {
-            foreach ($data_points as $point) {
-                $data_pairs[] = [
-                    'x' => $point['x_value'] ?? '', // Ensure subfields are correctly named
-                    'y' => $point['y_value'] ?? 0,
-                ];
-            }
+if ($chart_type === 'line') {
+    // Line Chart Data Processing
+    if (is_array($data_points) && !empty($data_points)) {
+        $chart_labels = array_map(function($item) { return $item['label']; }, $data_points);
+        $chart_values = array_map(function($item) { return $item['value']; }, $data_points);
+    } else {
+        echo '<p class="chart-error">No data points available for the line chart.</p>';
+        return; // Stop execution if there's no valid data
+    }
+    ?>
+    <div class="line-chart-container">
+        <canvas id="lineChartCanvas"
+                data-chart-type="line"
+                data-chart-title="<?php echo esc_attr($chart_title); ?>"
+                data-chart-labels="<?php echo htmlspecialchars(json_encode($chart_labels), ENT_QUOTES, 'UTF-8'); ?>"
+                data-chart-values="<?php echo htmlspecialchars(json_encode($chart_values), ENT_QUOTES, 'UTF-8'); ?>"
+                data-background-color="<?php echo esc_attr($background_color); ?>"
+                data-border-color="<?php echo esc_attr($border_color); ?>"
+                data-y-axis-label="<?php echo esc_attr($y_axis_label); ?>"
+                data-x-axis-label="<?php echo esc_attr($x_axis_label); ?>">
+        </canvas>
+    </div>
+    <?php
+} elseif ($chart_type === 'pie') {
+    // Pie Chart Data Processing
+    $total_value = 0;
+    if (is_array($chart_data) && !empty($chart_data)) {
+        foreach ($chart_data as $item) {
+            $total_value += $item['value'];
         }
-        
-
-        wp_localize_script('financial-chart-script', 'financialChartData', [
-            'chartTitle' => $chart_title,
-            'chartType' => $chart_type,
-            'chartColor' => $chart_color,
-            'dataPairs' => $data_pairs,
-        ]);
-    } elseif ($chart_type === 'pie') {
-        $pie_data = get_field('pie_data');
-        $labels = [];
-        $data = [];
-
-        if ($pie_data) {
-            foreach ($pie_data as $entry) {
-                $labels[] = $entry['pie_label'];
-                $data[] = $entry['percentage'];
+        if ($total_value === 100) {
+            foreach ($chart_data as $item) {
+                $chart_labels[] = $item['label'];
+                $chart_values[] = $item['value'];
+                $chart_colors[] = $item['color'];
             }
+        } else {
+            echo '<p class="chart-error">The sum of the values must equal 100 for the pie chart to display.</p>';
+            return;
         }
-
-        wp_localize_script('financial-chart-script', 'financialChartData', [
-            'chartTitle' => $chart_title,
-            'chartType' => $chart_type,
-            'labels' => $labels,
-            'data' => $data,
-            'backgroundColor' => ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#F77825', '#9966FF', '#C9CB3A'],
-        ]);
+    } else {
+        echo '<p class="chart-error">No data points available for the pie chart.</p>';
+        return;
     }
+    ?>
+    <div class="acf-pie-chart-block">
+        <canvas id="pieChartCanvas"
+                data-chart-type="pie"
+                data-chart-title="<?php echo esc_attr($chart_title); ?>"
+                data-chart-labels="<?php echo htmlspecialchars(json_encode($chart_labels), ENT_QUOTES, 'UTF-8'); ?>"
+                data-chart-values="<?php echo htmlspecialchars(json_encode($chart_values), ENT_QUOTES, 'UTF-8'); ?>"
+                data-chart-colors="<?php echo htmlspecialchars(json_encode($chart_colors), ENT_QUOTES, 'UTF-8'); ?>">
+        </canvas>
+    </div>
+    <?php
+} else {
+    echo '<p class="chart-error">Invalid chart type specified.</p>';
 }
-
-// Output canvas element
-function output_chart_canvas() {
-    $chart_type = get_field('chart_type');
-
-    if ($chart_type === 'line') {
-        echo '<canvas id="lineChartCanvas"></canvas>';
-    } elseif ($chart_type === 'pie') {
-        echo '<canvas id="pieChartCanvas"></canvas>';
-    }
-}
-
-// Output chart canvas directly in the template
-output_chart_canvas();
-
-/*
-function append_chart_canvas($content) {
-    $chart_type = get_field('chart_type');
-    $canvas_html = '';
-
-    if ($chart_type === 'line') {
-        $canvas_html = '<canvas id="lineChartCanvas"></canvas>';
-    } elseif ($chart_type === 'pie') {
-        $canvas_html = '<canvas id="pieChartCanvas"></canvas>';
-    }
-
-    return $content . $canvas_html;
-}
-
-add_filter('the_content', 'append_chart_canvas');
-*/
-?>
